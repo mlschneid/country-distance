@@ -50,7 +50,6 @@ if __name__ == '__main__':
     for countryA in countryDict.values():
         for countryB in countryDict.values():
             distance = Distance(countryA, countryB, countryA.distanceTo(countryB))
-            #countryDistance.append(distance)
             print distance
     
     
