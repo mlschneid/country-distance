@@ -3,7 +3,6 @@ import csv
 import math
 
 countryDict = {}
-countryDistance = []
 
 def read_file(filename):
     with open(filename, 'rb') as f:
@@ -11,7 +10,24 @@ def read_file(filename):
         next(countries, None) #skip header
         for alpha, lat, lon, fname in countries:
             if (len(lat) > 0 and len(lon) > 0):
-                countryDict[fname] = Country(fname, float(lat), float(lon))
+                countryDict[fname] = Country(fname, alpha, float(lat), float(lon))
+
+def write_matrix(filename):
+    countries_unsorted = [x for x in countryDict.values()]
+    countries = sorted(countries_unsorted, key=lambda x: x.iso_code)
+
+    first_line = ['']
+    for country in countries:
+        first_line.append(country.iso_code)
+       
+    with open(filename, 'wb') as csvfile:
+        writer = csv.writer(csvfile, delimiter = ',', quotechar='|')
+        writer.writerow(first_line)
+        for country in countries:
+            row = [country.iso_code]
+            for other_country in countries:
+                row.append(country.distanceTo(other_country))
+            writer.writerow(row)
 
 class Distance():
     def __init__(self, countryA, countryB, distance_km):
@@ -20,11 +36,12 @@ class Distance():
         self.distance_km = distance_km
 
     def __str__(self):
-        return ", ".join([self.countryA.fname, self.countryB.fname, str(self.distance_km)])
+        return ", ".join([self.countryA.iso_code, self.countryB.iso_code, str(self.distance_km)])
 
 class Country():
-    def __init__(self, fname, lat, lon):
+    def __init__(self, fname, iso_code, lat, lon):
         self.fname = fname
+        self.iso_code = iso_code
         self.latitude = lat
         self.longitude = lon
 
@@ -46,11 +63,16 @@ class Country():
 
 if __name__ == '__main__':
     read_file("google-country.csv")
+    write_matrix("distance-matrix.csv")
 
+    """
+    for country in countryDict.values():
+        print country.iso_code,
+        
     for countryA in countryDict.values():
         for countryB in countryDict.values():
-            distance = Distance(countryA, countryB, countryA.distanceTo(countryB))
-            print distance
+            print Distance(countryA, countryB, countryA.distanceTo(countryB))
+    """
     
     
 
