@@ -1,8 +1,22 @@
 #!/usr/bin/python
 import csv
 import math
+import sys, argparse
 
-countryDict = {}
+def main(argv, filename):
+    parser = argparse.ArgumentParser(description="Calculate distances between two countries")
+    parser.add_argument('-o', action="store", dest="output_type", type=str, \
+            help="Set format of output.", default="standard")
+
+    args = parser.parse_args()
+
+    read_file(filename)
+    
+    if args.output_type == "matrix":
+        print_matrix()
+    else:
+        print_standard()
+        
 
 def read_file(filename):
     with open(filename, 'rb') as f:
@@ -12,22 +26,27 @@ def read_file(filename):
             if (len(lat) > 0 and len(lon) > 0):
                 countryDict[fname] = Country(fname, alpha, float(lat), float(lon))
 
-def write_matrix(filename):
+def print_standard():
+    for countryA in countryDict.values():
+        for countryB in countryDict.values():
+            print Distance(countryA, countryB, countryA.distanceTo(countryB))
+
+
+def print_matrix():
     countries_unsorted = [x for x in countryDict.values()]
     countries = sorted(countries_unsorted, key=lambda x: x.iso_code)
 
-    first_line = ['']
+    print ",",
     for country in countries:
-        first_line.append(country.iso_code)
+        print country.iso_code + ", ",
+    print ""        
        
-    with open(filename, 'wb') as csvfile:
-        writer = csv.writer(csvfile, delimiter = ',', quotechar='|')
-        writer.writerow(first_line)
-        for country in countries:
-            row = [country.iso_code]
-            for other_country in countries:
-                row.append(country.distanceTo(other_country))
-            writer.writerow(row)
+    for country in countries:
+        row = [country.iso_code]
+        for other_country in countries:
+            row.append(str(country.distanceTo(other_country)))
+        print ', '.join(row) 
+
 
 class Distance():
     def __init__(self, countryA, countryB, distance_km):
@@ -36,7 +55,7 @@ class Distance():
         self.distance_km = distance_km
 
     def __str__(self):
-        return ", ".join([self.countryA.iso_code, self.countryB.iso_code, str(self.distance_km)])
+        return ", ".join([self.countryA.fname, self.countryB.fname, str(self.distance_km)])
 
 class Country():
     def __init__(self, fname, iso_code, lat, lon):
@@ -62,17 +81,7 @@ class Country():
         
 
 if __name__ == '__main__':
-    read_file("google-country.csv")
-    write_matrix("distance-matrix.csv")
+    countryDict = {}
 
-    """
-    for country in countryDict.values():
-        print country.iso_code,
-        
-    for countryA in countryDict.values():
-        for countryB in countryDict.values():
-            print Distance(countryA, countryB, countryA.distanceTo(countryB))
-    """
-    
-    
+    main(sys.argv, "google-country.csv")
 
